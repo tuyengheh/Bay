@@ -1,0 +1,29 @@
+local flying = false
+local bv
+
+local player = game.Players.LocalPlayer
+
+function toggleFly()
+    local character = player.Character or player.CharacterAdded:Wait()
+    local hrp = character:WaitForChild("HumanoidRootPart")
+
+    if not flying then
+        flying = true
+        bv = Instance.new("BodyVelocity")
+        bv.MaxForce = Vector3.new(0, math.huge, 0)
+        bv.Velocity = Vector3.new(0, 4, 0) -- bay nhẹ
+        bv.Parent = hrp
+        print("Bật bay")
+    else
+        flying = false
+        if bv then bv:Destroy() end
+        print("Tắt bay")
+    end
+end
+
+-- bấm phím F để bật/tắt
+game:GetService("UserInputService").InputBegan:Connect(function(input, gpe)
+    if not gpe and input.KeyCode == Enum.KeyCode.F then
+        toggleFly()
+    end
+end)
