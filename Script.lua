@@ -1,44 +1,42 @@
-print("SCRIPT OK")
+-- chống load lại
+if getgenv().FlyLoaded then return end
+getgenv().FlyLoaded = true
 
 local player = game.Players.LocalPlayer
-local flying = false
+local active = false
 local conn
 
 -- UI
-local gui = Instance.new("ScreenGui")
-gui.Parent = game.CoreGui
+pcall(function()
+    game.CoreGui:FindFirstChild("FlyGui"):Destroy()
+end)
 
-local btn = Instance.new("TextButton")
+local gui = Instance.new("ScreenGui", game.CoreGui)
+gui.Name = "FlyGui"
+
+local btn = Instance.new("TextButton", gui)
 btn.Size = UDim2.new(0,120,0,50)
 btn.Position = UDim2.new(0,20,0,200)
 btn.Text = "Fly: OFF"
-btn.Parent = gui
 
 btn.Active = true
 btn.Draggable = true
 
 btn.Activated:Connect(function()
-    flying = not flying
-    print("TRANG THAI:", flying)
+    active = not active
+    btn.Text = active and "Fly: ON" or "Fly: OFF"
 
-    if flying then
-        btn.Text = "Fly: ON"
+    local char = player.Character or player.CharacterAdded:Wait()
+    local hum = char:WaitForChild("Humanoid")
+    local hrp = char:WaitForChild("HumanoidRootPart")
 
-        local char = player.Character or player.CharacterAdded:Wait()
-        local hrp = char:WaitForChild("HumanoidRootPart")
-
+    if active then
         conn = game:GetService("RunService").Heartbeat:Connect(function()
-            if flying and hrp then
-                hrp.Velocity = Vector3.new(0, 5, 0)
-            end
+            -- kiểu "nhảy nhẹ liên tục"
+            hum:ChangeState(Enum.HumanoidStateType.Jumping)
+            hrp.Velocity = Vector3.new(0, 6, 0)
         end)
-
     else
-        btn.Text = "Fly: OFF"
-
-        if conn then
-            conn:Disconnect()
-            conn = nil
-        end
+        if conn then conn:Disconnect() end
     end
 end)
