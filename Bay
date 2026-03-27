@@ -1,48 +1,32 @@
 local player = game.Players.LocalPlayer
-local active = false
-local height = 3
-local connection
+local flying = false
+local conn
 
--- UI
-local gui = Instance.new("ScreenGui")
-gui.Parent = game.CoreGui
+local gui = Instance.new("ScreenGui", game.CoreGui)
+local btn = Instance.new("TextButton", gui)
 
-local btn = Instance.new("TextButton")
 btn.Size = UDim2.new(0,120,0,50)
 btn.Position = UDim2.new(0,20,0,200)
-btn.Text = "Float: OFF"
-btn.Parent = gui
+btn.Text = "Fly: OFF"
 
 btn.Active = true
 btn.Draggable = true
 
-local function startFloat()
+btn.Activated:Connect(function()
+    flying = not flying
+    btn.Text = flying and "Fly: ON" or "Fly: OFF"
+
     local char = player.Character or player.CharacterAdded:Wait()
     local hrp = char:WaitForChild("HumanoidRootPart")
 
-    local pos = hrp.Position + Vector3.new(0, height, 0)
-
-    connection = game:GetService("RunService").Heartbeat:Connect(function()
-        if active then
-            hrp.CFrame = CFrame.new(pos)
-        end
-    end)
-end
-
-local function stopFloat()
-    if connection then
-        connection:Disconnect()
-        connection = nil
-    end
-end
-
-btn.Activated:Connect(function()
-    active = not active
-    btn.Text = active and "Float: ON" or "Float: OFF"
-
-    if active then
-        startFloat()
+    if flying then
+        conn = game:GetService("RunService").Heartbeat:Connect(function()
+            -- đẩy lên nhẹ liên tục
+            hrp.Velocity = Vector3.new(0, 5, 0)
+        end)
     else
-        stopFloat()
+        if conn then
+            conn:Disconnect()
+        end
     end
 end)
