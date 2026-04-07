@@ -112,3 +112,51 @@ stopBtn.MouseButton1Click:Connect(function()
     enabled = false
     print("🛑 Force stopped")
 end)
+------------
+local player = game.Players.LocalPlayer
+
+-- 🔁 Hàm tạo GUI
+local function createGui()
+    local old = player.PlayerGui:FindFirstChild("AutoEventUI")
+    if old then old:Destroy() end
+
+    local gui = Instance.new("ScreenGui")
+    gui.Name = "AutoEventUI"
+    gui.ResetOnSpawn = false
+    gui.Parent = player:WaitForChild("PlayerGui")
+
+    local main = Instance.new("Frame", gui)
+    main.Size = UDim2.new(0,200,0,120)
+    main.Position = UDim2.new(0.5,-100,0.7,0)
+    main.BackgroundColor3 = Color3.fromRGB(25,25,25)
+    main.Active = true
+    main.Draggable = true
+
+    local stroke = Instance.new("UIStroke", main)
+    stroke.Color = Color3.fromRGB(0,170,255)
+    stroke.Thickness = 2
+
+    Instance.new("UICorner", main)
+
+    local btn = Instance.new("TextButton", main)
+    btn.Size = UDim2.new(0,160,0,40)
+    btn.Position = UDim2.new(0.5,-80,0,10)
+    btn.Text = "AUTO EVENT"
+    btn.BackgroundColor3 = Color3.fromRGB(40,40,40)
+    btn.TextColor3 = Color3.new(1,1,1)
+    Instance.new("UICorner", btn)
+
+    return gui
+end
+
+-- 🌟 tạo lần đầu
+local gui = createGui()
+
+-- 🔁 respawn vẫn giữ GUI
+player.CharacterAdded:Connect(function()
+    task.wait(0.5)
+    if not player.PlayerGui:FindFirstChild("AutoEventUI") then
+        gui = createGui()
+        print("🔁 GUI restored after death")
+    end
+end)
