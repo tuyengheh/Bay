@@ -1,74 +1,73 @@
--- ⚡ Loadstring demo EasterBaseSkinPedestal
 local player = game.Players.LocalPlayer
-local Workspace = game:GetService("Workspace")
 
--- 🔹 Tạo pedestal demo
-local pedestalName = "EasterBaseSkinPedestal"
-if Workspace:FindFirstChild(pedestalName) then
-    Workspace[pedestalName]:Destroy()
-end
+-- 🌟 UI
+local gui = Instance.new("ScreenGui", player.PlayerGui)
+gui.Name = "AutoEventUI"
 
-local pedestal = Instance.new("Part")
-pedestal.Name = pedestalName
-pedestal.Size = Vector3.new(4,8,4)      -- chiều cao 8
-pedestal.Position = Vector3.new(0,15,0) -- cao hơn mặt đất để test bay
-pedestal.Anchored = true
-pedestal.Parent = Workspace
+local btn = Instance.new("TextButton", gui)
+btn.Size = UDim2.new(0,170,0,50)
+btn.Position = UDim2.new(0.5,-85,0.8,0)
+btn.Text = "AUTO EVENT"
+btn.BackgroundColor3 = Color3.fromRGB(0,170,255)
 
--- 🔹 Thêm ProximityPrompt demo
-local prompt = Instance.new("ProximityPrompt")
-prompt.ActionText = "Collect"
-prompt.ObjectText = "Easter Egg"
-prompt.MaxActivationDistance = 20
-prompt.RequiresLineOfSight = false
-prompt.HoldDuration = 0
-prompt.Parent = pedestal
+local enabled = false
 
--- 🔹 Thêm ClickDetector demo
-local click = Instance.new("ClickDetector")
-click.Parent = pedestal
+btn.MouseButton1Click:Connect(function()
+    enabled = not enabled
+    btn.Text = enabled and "STOP" or "AUTO EVENT"
+end)
 
-print("✅ Demo EasterBaseSkinPedestal đã tạo xong!")
-
--- 🔹 AUTO EVENT SCRIPT để test bay + fire prompt
-local autoEventBtn = Instance.new("BoolValue") -- demo button state
-autoEventBtn.Name = "AutoEventBtn"
-autoEventBtn.Value = true -- bật auto
-autoEventBtn.Parent = player
-
+-- 🚀 Auto bay tới pedestal
 task.spawn(function()
     while true do
-        if autoEventBtn and autoEventBtn.Value then
+        if enabled then
             local char = player.Character
             local hrp = char and char:FindFirstChild("HumanoidRootPart")
             local hum = char and char:FindFirstChild("Humanoid")
-            if hrp and hum then
-                local target = pedestal.Position + Vector3.new(0,8,0)
-                for i = 1,15 do
-                    hrp.CFrame = hrp.CFrame:Lerp(CFrame.new(target), 0.3)
-                    hrp.Velocity = Vector3.zero
-                    task.wait(0.03)
-                end
-                hrp.Velocity = Vector3.zero
-                hum.PlatformStand = true
-                task.wait(0.2)
 
-                -- fire ProximityPrompt
-                for _,p in pairs(pedestal:GetDescendants()) do
-                    if p:IsA("ProximityPrompt") then
-                        fireproximityprompt(p)
-                        print("✅ PROMPT fired!")
+            if hrp and hum then
+                for _,v in pairs(workspace:GetDescendants()) do
+                    if v.Name == "EasterBaseSkinPedestal" then
+                        
+                        local part = v:IsA("BasePart") and v or v:FindFirstChildWhichIsA("BasePart")
+                        if part then
+                            print("🎯 FOUND")
+
+                            -- 📍 target cao hơn để không bị thấp
+                            local target = part.Position + Vector3.new(0,10,0)
+
+                            -- 🚀 bay nhanh + mượt
+                            for i = 1,15 do
+                                hrp.CFrame = hrp.CFrame:Lerp(CFrame.new(target), 0.35)
+                                hrp.Velocity = Vector3.zero
+                                task.wait(0.02)
+                            end
+
+                            -- 🛑 chống rơi
+                            hum.PlatformStand = true
+                            hrp.Velocity = Vector3.zero
+                            task.wait(0.15)
+
+                            -- 🔘 auto prompt
+                            for _,p in pairs(v:GetDescendants()) do
+                                if p:IsA("ProximityPrompt") then
+                                    p.HoldDuration = 0
+                                    fireproximityprompt(p)
+                                    print("✅ PROMPT")
+                                end
+                            end
+
+                            -- 🔘 click phụ
+                            local click = v:FindFirstChildOfClass("ClickDetector")
+                            if click then
+                                fireclickdetector(click)
+                                print("✅ CLICK")
+                            end
+
+                            hum.PlatformStand = false
+                        end
                     end
                 end
-
-                -- fire ClickDetector
-                local click = pedestal:FindFirstChildOfClass("ClickDetector")
-                if click then
-                    fireclickdetector(click)
-                    print("✅ Click fired!")
-                end
-
-                hum.PlatformStand = false
             end
         end
         task.wait(0.1)
