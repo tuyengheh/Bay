@@ -99,3 +99,16 @@ task.spawn(function()
         task.wait(0.3)
     end
 end)
+---------------------
+local stopBtn = Instance.new("TextButton", main)
+stopBtn.Size = UDim2.new(0,160,0,30)
+stopBtn.Position = UDim2.new(0.5,-80,1,-35)
+stopBtn.Text = "FORCE STOP"
+stopBtn.BackgroundColor3 = Color3.fromRGB(170,0,0)
+stopBtn.TextColor3 = Color3.new(1,1,1)
+Instance.new("UICorner", stopBtn)
+
+stopBtn.MouseButton1Click:Connect(function()
+    enabled = false
+    print("🛑 Force stopped")
+end)
