@@ -92,18 +92,39 @@ task.spawn(function()
     end
 end)
 
--- 👁️ XRAY
+-- 👁️ XRAY XỊN
+local function applyXray(state)
+    for _,v in pairs(workspace:GetDescendants()) do
+        if v:IsA("BasePart") then
+
+            -- bỏ qua mấy thứ quan trọng
+            if v.Name ~= "HumanoidRootPart" and not v:IsDescendantOf(player.Character) then
+                
+                if state then
+                    v.LocalTransparencyModifier = 0.6
+                else
+                    v.LocalTransparencyModifier = 0
+                end
+
+            end
+        end
+    end
+end
+
 xrayBtn.MouseButton1Click:Connect(function()
     xrayOn = not xrayOn
     xrayBtn.Text = xrayOn and "XRAY ON" or "XRAY OFF"
 
-    for _,v in pairs(workspace:GetDescendants()) do
-        if v:IsA("BasePart") then
-            local n = v.Name:lower()
-            if n:find("wall") or n:find("house") then
-                v.LocalTransparencyModifier = xrayOn and 0.6 or 0
-            end
+    applyXray(xrayOn)
+end)
+
+-- 🔁 UPDATE LIÊN TỤC (QUAN TRỌNG)
+task.spawn(function()
+    while true do
+        if xrayOn then
+            applyXray(true)
         end
+        task.wait(2)
     end
 end)
 
