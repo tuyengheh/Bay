@@ -22,7 +22,7 @@ local function createGui()
     gui.Parent = player.PlayerGui
 
     local main = Instance.new("Frame", gui)
-    main.Size = UDim2.new(0,200,0,260)
+    main.Size = UDim2.new(0,200,0,300)
     main.Position = UDim2.new(0.5,-100,0.7,0)
     main.BackgroundColor3 = Color3.fromRGB(25,25,25)
     main.Active = true
@@ -79,30 +79,78 @@ local function createGui()
     xrayBtn.TextColor3 = Color3.new(1,1,1)
     Instance.new("UICorner", xrayBtn)
 
-    return gui, btn, testBtn, baseBtn, lagBtn, xrayBtn
+    -- SPEED
+    local speedBtn = Instance.new("TextButton", main)
+    speedBtn.Size = UDim2.new(0,160,0,30)
+    speedBtn.Position = UDim2.new(0.5,-80,0,225)
+    speedBtn.Text = "SPEED OFF"
+    speedBtn.BackgroundColor3 = Color3.fromRGB(0,170,0)
+    speedBtn.TextColor3 = Color3.new(1,1,1)
+    Instance.new("UICorner", speedBtn)
+
+    -- ✨ FADE IN
+    main.BackgroundTransparency = 1
+    for _,v in pairs(main:GetDescendants()) do
+        if v:IsA("TextButton") then
+            v.TextTransparency = 1
+        end
+    end
+
+    task.spawn(function()
+        for i = 1,10 do
+            main.BackgroundTransparency -= 0.1
+            for _,v in pairs(main:GetDescendants()) do
+                if v:IsA("TextButton") then
+                    v.TextTransparency -= 0.1
+                end
+            end
+            task.wait(0.03)
+        end
+    end)
+
+    return gui, btn, testBtn, baseBtn, lagBtn, xrayBtn, speedBtn
 end
 
-local gui, btn, testBtn, baseBtn, lagBtn, xrayBtn = createGui()
+local gui, btn, testBtn, baseBtn, lagBtn, xrayBtn, speedBtn = createGui()
 
--- 🔁 RESPAWN
+-- 🔁 RESPAWN GUI
 player.CharacterAdded:Connect(function()
     task.wait(0.5)
     if not player.PlayerGui:FindFirstChild("AutoEventUI") then
-        gui, btn, testBtn, baseBtn, lagBtn, xrayBtn = createGui()
+        gui, btn, testBtn, baseBtn, lagBtn, xrayBtn, speedBtn = createGui()
     end
 end)
+
+-- 💥 CLICK EFFECT
+local function clickEffect(b)
+    b.MouseButton1Down:Connect(function()
+        b.Size = b.Size - UDim2.new(0,4,0,4)
+    end)
+    b.MouseButton1Up:Connect(function()
+        b.Size = b.Size + UDim2.new(0,4,0,4)
+    end)
+end
+
+clickEffect(btn)
+clickEffect(testBtn)
+clickEffect(baseBtn)
+clickEffect(lagBtn)
+clickEffect(xrayBtn)
+clickEffect(speedBtn)
 
 -- ⚙️ BIẾN
 local enabled = false
 local fake = nil
 local xrayEnabled = false
+local speedOn = false
 
+-- AUTO EVENT
 btn.MouseButton1Click:Connect(function()
     enabled = not enabled
     btn.Text = enabled and "STOP" or "AUTO EVENT"
 end)
 
--- 🧪 TEST
+-- TEST
 testBtn.MouseButton1Click:Connect(function()
     if fake then
         fake:Destroy()
@@ -125,12 +173,17 @@ testBtn.MouseButton1Click:Connect(function()
     end
 end)
 
--- 🚶 SPEED 30
+-- 🚶 SPEED
+speedBtn.MouseButton1Click:Connect(function()
+    speedOn = not speedOn
+    speedBtn.Text = speedOn and "SPEED 30" or "SPEED OFF"
+end)
+
 task.spawn(function()
     while true do
         local hum = player.Character and player.Character:FindFirstChild("Humanoid")
         if hum then
-            hum.WalkSpeed = 30
+            hum.WalkSpeed = speedOn and 30 or 16
         end
         task.wait(0.5)
     end
@@ -140,7 +193,6 @@ end)
 local function stepTeleport(pos)
     local hrp = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
     if not hrp then return end
-
     local cur = hrp.Position
     for i = 1,5 do
         hrp.CFrame = CFrame.new(cur:Lerp(pos, i/5))
@@ -148,11 +200,10 @@ local function stepTeleport(pos)
     end
 end
 
--- 🛑 ĐỨNG YÊN
+-- 🛑 STAY
 local function stayStill(t)
     local hrp = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
     if not hrp then return end
-
     local s = tick()
     while tick() - s < t do
         hrp.Velocity = Vector3.zero
@@ -169,7 +220,6 @@ local function legitTeleport(pos)
 
     local near = pos - (hrp.CFrame.LookVector * 6)
     stepTeleport(near)
-
     task.wait(0.2)
 
     hum:MoveTo(pos)
@@ -187,48 +237,36 @@ local function legitTeleport(pos)
     stayStill(2.3)
 end
 
--- 🏠 TELE BASE
+-- TELE BASE
 baseBtn.MouseButton1Click:Connect(function()
     if basePosition then
         legitTeleport(basePosition)
     end
 end)
 
--- ⚡ FIX LAG (SAFE)
+-- ⚡ FIX LAG
 lagBtn.MouseButton1Click:Connect(function()
     for _,v in pairs(workspace:GetDescendants()) do
-        if v:IsA("ParticleEmitter") or
-           v:IsA("Trail") or
-           v:IsA("Smoke") or
-           v:IsA("Fire") then
+        if v:IsA("ParticleEmitter") or v:IsA("Trail") then
             v.Enabled = false
         end
-
-        if v:IsA("PointLight") or
-           v:IsA("SpotLight") or
-           v:IsA("SurfaceLight") then
+        if v:IsA("PointLight") or v:IsA("SpotLight") then
             v.Enabled = false
         end
     end
-
     game.Lighting.GlobalShadows = false
 end)
 
--- 👁️ XRAY BASE
+-- 👁️ XRAY
 xrayBtn.MouseButton1Click:Connect(function()
     xrayEnabled = not xrayEnabled
     xrayBtn.Text = xrayEnabled and "XRAY ON" or "XRAY BASE"
 
     for _,v in pairs(workspace:GetDescendants()) do
         if v:IsA("BasePart") then
-            local name = v.Name:lower()
-
-            if name:find("wall") or name:find("house") or name:find("base") then
-                if xrayEnabled then
-                    v.LocalTransparencyModifier = 0.7
-                else
-                    v.LocalTransparencyModifier = 0
-                end
+            local n = v.Name:lower()
+            if n:find("wall") or n:find("house") or n:find("base") then
+                v.LocalTransparencyModifier = xrayEnabled and 0.7 or 0
             end
         end
     end
@@ -241,16 +279,13 @@ task.spawn(function()
             for _,v in pairs(workspace:GetDescendants()) do
                 if v.Name == "EasterBaseSkinPedestal" then
                     local part = v:IsA("BasePart") and v or v:FindFirstChildWhichIsA("BasePart")
-
                     if part then
                         legitTeleport(part.Position)
-
                         for _,p in pairs(v:GetDescendants()) do
                             if p:IsA("ProximityPrompt") then
                                 fireproximityprompt(p)
                             end
                         end
-
                         task.wait(0.5)
                     end
                 end
