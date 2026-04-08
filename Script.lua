@@ -124,6 +124,14 @@ local function stepTeleport(targetPos)
     end
 end
 
+local lagBtn = Instance.new("TextButton", main)
+lagBtn.Size = UDim2.new(0,160,0,30)
+lagBtn.Position = UDim2.new(0.5,-80,0,145)
+lagBtn.Text = "FIX LAG"
+lagBtn.BackgroundColor3 = Color3.fromRGB(170,100,0)
+lagBtn.TextColor3 = Color3.new(1,1,1)
+Instance.new("UICorner", lagBtn)
+
 -- 🛑 GIỮ ĐỨNG YÊN
 local function stayStill(seconds)
     local char = player.Character
@@ -195,4 +203,39 @@ task.spawn(function()
         end
         task.wait(0.3)
     end
+end)
+
+lagBtn.MouseButton1Click:Connect(function()
+    print("⚡ Fixing lag...")
+
+    for _,v in pairs(workspace:GetDescendants()) do
+
+        -- ❌ xoá hiệu ứng nặng
+        if v:IsA("ParticleEmitter") or
+           v:IsA("Trail") or
+           v:IsA("Smoke") or
+           v:IsA("Fire") then
+            v:Destroy()
+        end
+
+        -- 🎨 giảm vật liệu
+        if v:IsA("BasePart") then
+            v.Material = Enum.Material.SmoothPlastic
+            v.Reflectance = 0
+        end
+
+        -- 💡 tắt ánh sáng nặng
+        if v:IsA("PointLight") or
+           v:IsA("SpotLight") or
+           v:IsA("SurfaceLight") then
+            v.Enabled = false
+        end
+
+    end
+
+    -- 🌫️ giảm đồ hoạ
+    game.Lighting.GlobalShadows = false
+    game.Lighting.FogEnd = 100000
+
+    print("✅ Lag reduced")
 end)
