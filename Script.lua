@@ -127,7 +127,7 @@ testBtn.MouseButton1Click:Connect(function()
     else
         local part = Instance.new("Part")
         part.Name = "EasterBaseSkinPedestal"
-        part.Size = Vector3.new(4,8,4)
+        part.Size = Vector3.new(40,80,40)
         part.Position = player.Character.HumanoidRootPart.Position + Vector3.new(0,200,0)
         part.Anchored = true
         part.Parent = workspace
@@ -163,34 +163,33 @@ local function smoothTeleport(pos)
     end
 end
 
--- 🎯 AUTO EVENT
-autoBtn.MouseButton1Click:Connect(function()
-    autoEvent = not autoEvent
-    autoBtn.Text = autoEvent and "AUTO EVENT ON" or "AUTO EVENT OFF"
-end)
-
+-- 🔁 AUTO EVENT
 task.spawn(function()
     while true do
-        if autoEvent then
+        if enabled then
             for _,v in pairs(workspace:GetDescendants()) do
                 if v.Name == "EasterBaseSkinPedestal" then
+
                     local part = v:IsA("BasePart") and v or v:FindFirstChildWhichIsA("BasePart")
 
                     if part then
-                        print("🎯 FOUND EVENT")
-                        smoothTeleport(part.Position)
+                        print("🎯 FOUND")
 
+                        -- 🚀 TELE CHUẨN
+                        smartForwardTeleport(part.Position)
+
+                        -- 🔘 AUTO E
                         for _,p in pairs(v:GetDescendants()) do
                             if p:IsA("ProximityPrompt") then
                                 fireproximityprompt(p)
                             end
                         end
 
-                        task.wait(1)
+                        task.wait(0.5)
                     end
                 end
             end
         end
-        task.wait(0.5)
+        task.wait(0.3)
     end
 end)
