@@ -29,7 +29,6 @@ local function createGui()
     local stroke = Instance.new("UIStroke", main)
     stroke.Color = Color3.fromRGB(0,170,255)
 
-    -- BUTTON TEMPLATE
     local function makeBtn(text, y, color)
         local b = Instance.new("TextButton", main)
         b.Size = UDim2.new(0,170,0,35)
@@ -92,21 +91,11 @@ task.spawn(function()
     end
 end)
 
--- 👁️ XRAY XỊN
+-- 👁️ XRAY
 local function applyXray(state)
     for _,v in pairs(workspace:GetDescendants()) do
-        if v:IsA("BasePart") then
-
-            -- bỏ qua mấy thứ quan trọng
-            if v.Name ~= "HumanoidRootPart" and not v:IsDescendantOf(player.Character) then
-                
-                if state then
-                    v.LocalTransparencyModifier = 0.6
-                else
-                    v.LocalTransparencyModifier = 0
-                end
-
-            end
+        if v:IsA("BasePart") and not v:IsDescendantOf(player.Character) then
+            v.LocalTransparencyModifier = state and 0.6 or 0
         end
     end
 end
@@ -114,16 +103,12 @@ end
 xrayBtn.MouseButton1Click:Connect(function()
     xrayOn = not xrayOn
     xrayBtn.Text = xrayOn and "XRAY ON" or "XRAY OFF"
-
     applyXray(xrayOn)
 end)
 
--- 🔁 UPDATE LIÊN TỤC (QUAN TRỌNG)
 task.spawn(function()
     while true do
-        if xrayOn then
-            applyXray(true)
-        end
+        if xrayOn then applyXray(true) end
         task.wait(2)
     end
 end)
@@ -136,7 +121,6 @@ lagBtn.MouseButton1Click:Connect(function()
         end
     end
     game.Lighting.GlobalShadows = false
-    print("⚡ Lag fixed")
 end)
 
 -- 🧪 FAKE EVENT
@@ -149,7 +133,7 @@ testBtn.MouseButton1Click:Connect(function()
         local part = Instance.new("Part")
         part.Name = "EasterBaseSkinPedestal"
         part.Size = Vector3.new(40,80,40)
-        part.Position = player.Character.HumanoidRootPart.Position + Vector3.new(0,200,0)
+        part.Position = player.Character.HumanoidRootPart.Position + Vector3.new(0,2000,0)
         part.Anchored = true
         part.Parent = workspace
 
@@ -184,33 +168,37 @@ local function smoothTeleport(pos)
     end
 end
 
--- 🔁 AUTO EVENT
+-- 🎯 NÚT AUTO EVENT
+autoBtn.MouseButton1Click:Connect(function()
+    autoEvent = not autoEvent
+    autoBtn.Text = autoEvent and "AUTO EVENT ON" or "AUTO EVENT OFF"
+end)
+
+-- 🔁 AUTO EVENT (FIX CHUẨN)
 task.spawn(function()
     while true do
-        if enabled then
+        if autoEvent then
             for _,v in pairs(workspace:GetDescendants()) do
                 if v.Name == "EasterBaseSkinPedestal" then
 
                     local part = v:IsA("BasePart") and v or v:FindFirstChildWhichIsA("BasePart")
 
                     if part then
-                        print("🎯 FOUND")
+                        print("🎯 FOUND EVENT")
 
-                        -- 🚀 TELE CHUẨN
-                        smartForwardTeleport(part.Position)
+                        smoothTeleport(part.Position)
 
-                        -- 🔘 AUTO E
                         for _,p in pairs(v:GetDescendants()) do
                             if p:IsA("ProximityPrompt") then
                                 fireproximityprompt(p)
                             end
                         end
 
-                        task.wait(0.5)
+                        task.wait(1)
                     end
                 end
             end
         end
-        task.wait(0.3)
+        task.wait(0.5)
     end
 end)
