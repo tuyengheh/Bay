@@ -1,14 +1,13 @@
 -- 🧠 PLAYER
 local player = game.Players.LocalPlayer
 
--- 📍 LƯU BASE
+-- 📍 BASE
 local basePosition = nil
 
 player.CharacterAdded:Connect(function(char)
     local hrp = char:WaitForChild("HumanoidRootPart")
     task.wait(0.5)
     basePosition = hrp.Position
-    print("📍 Saved base")
 end)
 
 -- 🌟 GUI
@@ -23,7 +22,7 @@ local function createGui()
     gui.Parent = player.PlayerGui
 
     local main = Instance.new("Frame", gui)
-    main.Size = UDim2.new(0,200,0,180)
+    main.Size = UDim2.new(0,200,0,220)
     main.Position = UDim2.new(0.5,-100,0.7,0)
     main.BackgroundColor3 = Color3.fromRGB(25,25,25)
     main.Active = true
@@ -62,16 +61,25 @@ local function createGui()
     baseBtn.TextColor3 = Color3.new(1,1,1)
     Instance.new("UICorner", baseBtn)
 
-    return gui, btn, testBtn, baseBtn
+    -- 🔥 FIX LAG (đúng chỗ)
+    local lagBtn = Instance.new("TextButton", main)
+    lagBtn.Size = UDim2.new(0,160,0,30)
+    lagBtn.Position = UDim2.new(0.5,-80,0,145)
+    lagBtn.Text = "FIX LAG"
+    lagBtn.BackgroundColor3 = Color3.fromRGB(170,100,0)
+    lagBtn.TextColor3 = Color3.new(1,1,1)
+    Instance.new("UICorner", lagBtn)
+
+    return gui, btn, testBtn, baseBtn, lagBtn
 end
 
-local gui, btn, testBtn, baseBtn = createGui()
+local gui, btn, testBtn, baseBtn, lagBtn = createGui()
 
--- 🔁 KHÔNG MẤT GUI
+-- 🔁 RESPAWN
 player.CharacterAdded:Connect(function()
     task.wait(0.5)
     if not player.PlayerGui:FindFirstChild("AutoEventUI") then
-        gui, btn, testBtn, baseBtn = createGui()
+        gui, btn, testBtn, baseBtn, lagBtn = createGui()
     end
 end)
 
@@ -84,7 +92,7 @@ btn.MouseButton1Click:Connect(function()
     btn.Text = enabled and "STOP" or "AUTO EVENT"
 end)
 
--- 🧪 FAKE TEST 2000
+-- 🧪 TEST
 testBtn.MouseButton1Click:Connect(function()
     if fake then
         fake:Destroy()
@@ -107,71 +115,63 @@ testBtn.MouseButton1Click:Connect(function()
     end
 end)
 
--- 🚀 TELE CHIA BƯỚC (ANTI-CHEAT)
-local function stepTeleport(targetPos)
-    local char = player.Character
-    local hrp = char and char:FindFirstChild("HumanoidRootPart")
+-- 🚀 TELE
+local function stepTeleport(pos)
+    local hrp = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
     if not hrp then return end
 
-    local current = hrp.Position
-    local distance = (targetPos - current).Magnitude
-    local steps = math.clamp(math.floor(distance / 60), 2, 10)
+    local cur = hrp.Position
+    local steps = 5
 
     for i = 1, steps do
-        local pos = current:Lerp(targetPos, i/steps)
-        hrp.CFrame = CFrame.new(pos + Vector3.new(0,3,0))
+        hrp.CFrame = CFrame.new(cur:Lerp(pos, i/steps))
         task.wait(0.05)
     end
 end
 
-local lagBtn = Instance.new("TextButton", main)
-lagBtn.Size = UDim2.new(0,160,0,30)
-lagBtn.Position = UDim2.new(0.5,-80,0,145)
-lagBtn.Text = "FIX LAG"
-lagBtn.BackgroundColor3 = Color3.fromRGB(170,100,0)
-lagBtn.TextColor3 = Color3.new(1,1,1)
-Instance.new("UICorner", lagBtn)
-
--- 🛑 GIỮ ĐỨNG YÊN
-local function stayStill(seconds)
-    local char = player.Character
-    local hrp = char and char:FindFirstChild("HumanoidRootPart")
+-- 🛑 STAY
+local function stayStill(t)
+    local hrp = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
     if not hrp then return end
 
-    local t = tick()
-    while tick() - t < seconds do
+    local s = tick()
+    while tick() - s < t do
         hrp.Velocity = Vector3.zero
         task.wait(0.1)
     end
 end
 
--- 🧠 TELE THÔNG MINH (XOAY + TIẾN NHẸ)
-local function smartForwardTeleport(targetPos)
-    local char = player.Character
-    local hrp = char and char:FindFirstChild("HumanoidRootPart")
+-- 🧠 SMART TELE
+local function smartForwardTeleport(pos)
+    local hrp = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
     if not hrp then return end
 
-    -- tele tới gần
-    stepTeleport(targetPos)
-
-    -- xoay mặt đúng hướng
-    hrp.CFrame = CFrame.new(hrp.Position, targetPos)
-
+    stepTeleport(pos)
+    hrp.CFrame = CFrame.new(hrp.Position, pos)
     task.wait(0.1)
 
-    -- tiến nhẹ phía trước
     hrp.CFrame = hrp.CFrame + (hrp.CFrame.LookVector * 3)
-
-    -- đứng yên 2s
     stayStill(2)
 end
 
--- 🏠 TELE BASE
+-- 🏠 BASE
 baseBtn.MouseButton1Click:Connect(function()
     if basePosition then
         smartForwardTeleport(basePosition)
-        print("🏠 Tele base chuẩn")
     end
+end)
+
+-- ⚡ FIX LAG
+lagBtn.MouseButton1Click:Connect(function()
+    for _,v in pairs(workspace:GetDescendants()) do
+        if v:IsA("ParticleEmitter") or v:IsA("Trail") then
+            v:Destroy()
+        end
+        if v:IsA("BasePart") then
+            v.Material = Enum.Material.SmoothPlastic
+        end
+    end
+    game.Lighting.GlobalShadows = false
 end)
 
 -- 🔁 AUTO EVENT
@@ -180,22 +180,14 @@ task.spawn(function()
         if enabled then
             for _,v in pairs(workspace:GetDescendants()) do
                 if v.Name == "EasterBaseSkinPedestal" then
-
                     local part = v:IsA("BasePart") and v or v:FindFirstChildWhichIsA("BasePart")
-
                     if part then
-                        print("🎯 FOUND")
-
-                        -- 🚀 TELE CHUẨN
                         smartForwardTeleport(part.Position)
-
-                        -- 🔘 AUTO E
                         for _,p in pairs(v:GetDescendants()) do
                             if p:IsA("ProximityPrompt") then
                                 fireproximityprompt(p)
                             end
                         end
-
                         task.wait(0.5)
                     end
                 end
@@ -203,39 +195,4 @@ task.spawn(function()
         end
         task.wait(0.3)
     end
-end)
-
-lagBtn.MouseButton1Click:Connect(function()
-    print("⚡ Fixing lag...")
-
-    for _,v in pairs(workspace:GetDescendants()) do
-
-        -- ❌ xoá hiệu ứng nặng
-        if v:IsA("ParticleEmitter") or
-           v:IsA("Trail") or
-           v:IsA("Smoke") or
-           v:IsA("Fire") then
-            v:Destroy()
-        end
-
-        -- 🎨 giảm vật liệu
-        if v:IsA("BasePart") then
-            v.Material = Enum.Material.SmoothPlastic
-            v.Reflectance = 0
-        end
-
-        -- 💡 tắt ánh sáng nặng
-        if v:IsA("PointLight") or
-           v:IsA("SpotLight") or
-           v:IsA("SurfaceLight") then
-            v.Enabled = false
-        end
-
-    end
-
-    -- 🌫️ giảm đồ hoạ
-    game.Lighting.GlobalShadows = false
-    game.Lighting.FogEnd = 100000
-
-    print("✅ Lag reduced")
 end)
