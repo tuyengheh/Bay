@@ -137,12 +137,32 @@ local function stayStill(seconds)
     end
 end
 
+-- 🧠 TELE THÔNG MINH (XOAY + TIẾN NHẸ)
+local function smartForwardTeleport(targetPos)
+    local char = player.Character
+    local hrp = char and char:FindFirstChild("HumanoidRootPart")
+    if not hrp then return end
+
+    -- tele tới gần
+    stepTeleport(targetPos)
+
+    -- xoay mặt đúng hướng
+    hrp.CFrame = CFrame.new(hrp.Position, targetPos)
+
+    task.wait(0.1)
+
+    -- tiến nhẹ phía trước
+    hrp.CFrame = hrp.CFrame + (hrp.CFrame.LookVector * 3)
+
+    -- đứng yên 2s
+    stayStill(2)
+end
+
 -- 🏠 TELE BASE
 baseBtn.MouseButton1Click:Connect(function()
     if basePosition then
-        stepTeleport(basePosition)
-        stayStill(2) -- 🔥 đứng 2 giây
-        print("🏠 Tele base done")
+        smartForwardTeleport(basePosition)
+        print("🏠 Tele base chuẩn")
     end
 end)
 
@@ -158,11 +178,8 @@ task.spawn(function()
                     if part then
                         print("🎯 FOUND")
 
-                        -- 🚀 TELE TỚI EVENT
-                        stepTeleport(part.Position)
-
-                        -- 🛑 đứng 2 giây để game nhận
-                        stayStill(2)
+                        -- 🚀 TELE CHUẨN
+                        smartForwardTeleport(part.Position)
 
                         -- 🔘 AUTO E
                         for _,p in pairs(v:GetDescendants()) do
