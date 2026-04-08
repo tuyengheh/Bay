@@ -1,7 +1,7 @@
 -- 🧠 PLAYER
 local player = game.Players.LocalPlayer
 
--- 📍 BASE
+-- 📍 LƯU BASE
 local basePosition = nil
 
 player.CharacterAdded:Connect(function(char)
@@ -84,7 +84,7 @@ btn.MouseButton1Click:Connect(function()
     btn.Text = enabled and "STOP" or "AUTO EVENT"
 end)
 
--- 🧪 FAKE 2000
+-- 🧪 FAKE TEST 2000
 testBtn.MouseButton1Click:Connect(function()
     if fake then
         fake:Destroy()
@@ -107,7 +107,7 @@ testBtn.MouseButton1Click:Connect(function()
     end
 end)
 
--- 🚀 STEP TELEPORT (ANTI-CHEAT)
+-- 🚀 TELE CHIA BƯỚC (ANTI-CHEAT)
 local function stepTeleport(targetPos)
     local char = player.Character
     local hrp = char and char:FindFirstChild("HumanoidRootPart")
@@ -120,7 +120,20 @@ local function stepTeleport(targetPos)
     for i = 1, steps do
         local pos = current:Lerp(targetPos, i/steps)
         hrp.CFrame = CFrame.new(pos + Vector3.new(0,3,0))
-        task.wait(0.05) -- quan trọng: delay nhỏ tránh detect
+        task.wait(0.05)
+    end
+end
+
+-- 🛑 GIỮ ĐỨNG YÊN
+local function stayStill(seconds)
+    local char = player.Character
+    local hrp = char and char:FindFirstChild("HumanoidRootPart")
+    if not hrp then return end
+
+    local t = tick()
+    while tick() - t < seconds do
+        hrp.Velocity = Vector3.zero
+        task.wait(0.1)
     end
 end
 
@@ -128,14 +141,7 @@ end
 baseBtn.MouseButton1Click:Connect(function()
     if basePosition then
         stepTeleport(basePosition)
-
-        -- đứng yên
-        local hrp = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
-        if hrp then
-            hrp.Velocity = Vector3.zero
-        end
-
-        task.wait(1) -- 🛑 đứng 1s
+        stayStill(2) -- 🔥 đứng 2 giây
         print("🏠 Tele base done")
     end
 end)
@@ -152,10 +158,11 @@ task.spawn(function()
                     if part then
                         print("🎯 FOUND")
 
-                        -- 🚀 TELE AN TOÀN
+                        -- 🚀 TELE TỚI EVENT
                         stepTeleport(part.Position)
 
-                        task.wait(0.2)
+                        -- 🛑 đứng 2 giây để game nhận
+                        stayStill(2)
 
                         -- 🔘 AUTO E
                         for _,p in pairs(v:GetDescendants()) do
@@ -164,7 +171,7 @@ task.spawn(function()
                             end
                         end
 
-                        task.wait(0.5) -- delay tránh spam
+                        task.wait(0.5)
                     end
                 end
             end
