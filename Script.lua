@@ -1,29 +1,27 @@
--- 🧠 LẤY PLAYER
+-- 🧠 PLAYER
 local player = game.Players.LocalPlayer
 
--- 📍 LƯU BASE
+-- 📍 BASE
 local basePosition = nil
 
 player.CharacterAdded:Connect(function(char)
     local hrp = char:WaitForChild("HumanoidRootPart")
-    task.wait(0.3)
+    task.wait(0.5)
     basePosition = hrp.Position
     print("📍 Saved base")
 end)
 
--- 🌟 TẠO GUI
+-- 🌟 GUI
 local function createGui()
 
-    -- xoá GUI cũ nếu có
     local old = player.PlayerGui:FindFirstChild("AutoEventUI")
     if old then old:Destroy() end
 
     local gui = Instance.new("ScreenGui")
     gui.Name = "AutoEventUI"
     gui.ResetOnSpawn = false
-    gui.Parent = player:WaitForChild("PlayerGui")
+    gui.Parent = player.PlayerGui
 
-    -- khung chính
     local main = Instance.new("Frame", gui)
     main.Size = UDim2.new(0,200,0,180)
     main.Position = UDim2.new(0.5,-100,0.7,0)
@@ -31,14 +29,13 @@ local function createGui()
     main.Active = true
     main.Draggable = true
 
-    -- viền xanh
     local stroke = Instance.new("UIStroke", main)
     stroke.Color = Color3.fromRGB(0,170,255)
     stroke.Thickness = 2
 
     Instance.new("UICorner", main)
 
-    -- 🔘 AUTO EVENT
+    -- AUTO EVENT
     local btn = Instance.new("TextButton", main)
     btn.Size = UDim2.new(0,160,0,35)
     btn.Position = UDim2.new(0.5,-80,0,10)
@@ -47,7 +44,7 @@ local function createGui()
     btn.TextColor3 = Color3.new(1,1,1)
     Instance.new("UICorner", btn)
 
-    -- 🔘 CREATE TEST
+    -- TEST
     local testBtn = Instance.new("TextButton", main)
     testBtn.Size = UDim2.new(0,160,0,35)
     testBtn.Position = UDim2.new(0.5,-80,0,55)
@@ -56,7 +53,7 @@ local function createGui()
     testBtn.TextColor3 = Color3.new(1,1,1)
     Instance.new("UICorner", testBtn)
 
-    -- 🔘 TELE BASE
+    -- TELE BASE
     local baseBtn = Instance.new("TextButton", main)
     baseBtn.Size = UDim2.new(0,160,0,35)
     baseBtn.Position = UDim2.new(0.5,-80,0,100)
@@ -70,12 +67,11 @@ end
 
 local gui, btn, testBtn, baseBtn = createGui()
 
--- 🔁 RESPAWN KHÔNG MẤT GUI
+-- 🔁 KHÔNG MẤT GUI
 player.CharacterAdded:Connect(function()
     task.wait(0.5)
     if not player.PlayerGui:FindFirstChild("AutoEventUI") then
         gui, btn, testBtn, baseBtn = createGui()
-        print("🔁 GUI restored")
     end
 end)
 
@@ -83,13 +79,12 @@ end)
 local enabled = false
 local fake = nil
 
--- 🔘 BẬT AUTO
 btn.MouseButton1Click:Connect(function()
     enabled = not enabled
     btn.Text = enabled and "STOP" or "AUTO EVENT"
 end)
 
--- 🧪 TẠO FAKE CAO 2000
+-- 🧪 FAKE 2000
 testBtn.MouseButton1Click:Connect(function()
     if fake then
         fake:Destroy()
@@ -99,7 +94,7 @@ testBtn.MouseButton1Click:Connect(function()
         local part = Instance.new("Part")
         part.Name = "EasterBaseSkinPedestal"
         part.Size = Vector3.new(4,8,4)
-        part.Position = Vector3.new(0,2000,0) -- 🔥 cao
+        part.Position = Vector3.new(0,2000,0)
         part.Anchored = true
         part.Parent = workspace
 
@@ -112,25 +107,36 @@ testBtn.MouseButton1Click:Connect(function()
     end
 end)
 
--- 🚀 TELE AN TOÀN
-local function safeTeleport(pos)
+-- 🚀 STEP TELEPORT (ANTI-CHEAT)
+local function stepTeleport(targetPos)
     local char = player.Character
     local hrp = char and char:FindFirstChild("HumanoidRootPart")
     if not hrp then return end
 
-    -- tele 2 bước tránh anti cheat
-    hrp.CFrame = hrp.CFrame + Vector3.new(0,50,0)
-    task.wait(0.1)
-    hrp.CFrame = CFrame.new(pos + Vector3.new(0,3,0))
+    local current = hrp.Position
+    local distance = (targetPos - current).Magnitude
+    local steps = math.clamp(math.floor(distance / 60), 2, 10)
+
+    for i = 1, steps do
+        local pos = current:Lerp(targetPos, i/steps)
+        hrp.CFrame = CFrame.new(pos + Vector3.new(0,3,0))
+        task.wait(0.05) -- quan trọng: delay nhỏ tránh detect
+    end
 end
 
 -- 🏠 TELE BASE
 baseBtn.MouseButton1Click:Connect(function()
     if basePosition then
-        safeTeleport(basePosition)
-        print("🏠 Tele base")
-    else
-        warn("❌ Chưa có base")
+        stepTeleport(basePosition)
+
+        -- đứng yên
+        local hrp = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
+        if hrp then
+            hrp.Velocity = Vector3.zero
+        end
+
+        task.wait(1) -- 🛑 đứng 1s
+        print("🏠 Tele base done")
     end
 end)
 
@@ -146,8 +152,8 @@ task.spawn(function()
                     if part then
                         print("🎯 FOUND")
 
-                        -- 🚀 TELE TỚI EVENT
-                        safeTeleport(part.Position)
+                        -- 🚀 TELE AN TOÀN
+                        stepTeleport(part.Position)
 
                         task.wait(0.2)
 
@@ -155,13 +161,14 @@ task.spawn(function()
                         for _,p in pairs(v:GetDescendants()) do
                             if p:IsA("ProximityPrompt") then
                                 fireproximityprompt(p)
-                                print("✅ PRESS E")
                             end
                         end
+
+                        task.wait(0.5) -- delay tránh spam
                     end
                 end
             end
         end
-        task.wait(0.4)
+        task.wait(0.3)
     end
 end)
