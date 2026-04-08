@@ -61,7 +61,7 @@ local function createGui()
     baseBtn.TextColor3 = Color3.new(1,1,1)
     Instance.new("UICorner", baseBtn)
 
-    -- 🔥 FIX LAG (đúng chỗ)
+    -- FIX LAG
     local lagBtn = Instance.new("TextButton", main)
     lagBtn.Size = UDim2.new(0,160,0,30)
     lagBtn.Position = UDim2.new(0.5,-80,0,145)
@@ -115,21 +115,19 @@ testBtn.MouseButton1Click:Connect(function()
     end
 end)
 
--- 🚀 TELE
+-- 🚀 TELE CHIA BƯỚC
 local function stepTeleport(pos)
     local hrp = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
     if not hrp then return end
 
     local cur = hrp.Position
-    local steps = 5
-
-    for i = 1, steps do
-        hrp.CFrame = CFrame.new(cur:Lerp(pos, i/steps))
+    for i = 1,5 do
+        hrp.CFrame = CFrame.new(cur:Lerp(pos, i/5))
         task.wait(0.05)
     end
 end
 
--- 🛑 STAY
+-- 🛑 ĐỨNG YÊN
 local function stayStill(t)
     local hrp = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
     if not hrp then return end
@@ -141,36 +139,50 @@ local function stayStill(t)
     end
 end
 
--- 🧠 SMART TELE
+-- 🧠 TELE CHUẨN (ÉP VÀO VÙNG XANH)
 local function smartForwardTeleport(pos)
     local hrp = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
     if not hrp then return end
 
     stepTeleport(pos)
+
     hrp.CFrame = CFrame.new(hrp.Position, pos)
     task.wait(0.1)
 
-    hrp.CFrame = hrp.CFrame + (hrp.CFrame.LookVector * 3)
-    stayStill(2)
+    -- 🔥 tiến nhiều lần để chắc chắn vào vùng
+    for i = 1,5 do
+        hrp.CFrame = hrp.CFrame + (hrp.CFrame.LookVector * 2)
+        task.wait(0.05)
+    end
+
+    stayStill(2.2)
 end
 
--- 🏠 BASE
+-- 🏠 TELE BASE
 baseBtn.MouseButton1Click:Connect(function()
     if basePosition then
         smartForwardTeleport(basePosition)
     end
 end)
 
--- ⚡ FIX LAG
+-- ⚡ FIX LAG (KHÔNG XUYÊN TƯỜNG)
 lagBtn.MouseButton1Click:Connect(function()
     for _,v in pairs(workspace:GetDescendants()) do
-        if v:IsA("ParticleEmitter") or v:IsA("Trail") then
+
+        if v:IsA("ParticleEmitter") or
+           v:IsA("Trail") or
+           v:IsA("Smoke") or
+           v:IsA("Fire") then
             v:Destroy()
         end
-        if v:IsA("BasePart") then
-            v.Material = Enum.Material.SmoothPlastic
+
+        if v:IsA("PointLight") or
+           v:IsA("SpotLight") or
+           v:IsA("SurfaceLight") then
+            v.Enabled = false
         end
     end
+
     game.Lighting.GlobalShadows = false
 end)
 
@@ -180,14 +192,18 @@ task.spawn(function()
         if enabled then
             for _,v in pairs(workspace:GetDescendants()) do
                 if v.Name == "EasterBaseSkinPedestal" then
+
                     local part = v:IsA("BasePart") and v or v:FindFirstChildWhichIsA("BasePart")
+
                     if part then
                         smartForwardTeleport(part.Position)
+
                         for _,p in pairs(v:GetDescendants()) do
                             if p:IsA("ProximityPrompt") then
                                 fireproximityprompt(p)
                             end
                         end
+
                         task.wait(0.5)
                     end
                 end
