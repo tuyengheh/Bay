@@ -22,7 +22,7 @@ local function createGui()
     gui.Parent = player.PlayerGui
 
     local main = Instance.new("Frame", gui)
-    main.Size = UDim2.new(0,200,0,220)
+    main.Size = UDim2.new(0,200,0,260)
     main.Position = UDim2.new(0.5,-100,0.7,0)
     main.BackgroundColor3 = Color3.fromRGB(25,25,25)
     main.Active = true
@@ -70,22 +70,32 @@ local function createGui()
     lagBtn.TextColor3 = Color3.new(1,1,1)
     Instance.new("UICorner", lagBtn)
 
-    return gui, btn, testBtn, baseBtn, lagBtn
+    -- XRAY
+    local xrayBtn = Instance.new("TextButton", main)
+    xrayBtn.Size = UDim2.new(0,160,0,30)
+    xrayBtn.Position = UDim2.new(0.5,-80,0,185)
+    xrayBtn.Text = "XRAY BASE"
+    xrayBtn.BackgroundColor3 = Color3.fromRGB(120,0,170)
+    xrayBtn.TextColor3 = Color3.new(1,1,1)
+    Instance.new("UICorner", xrayBtn)
+
+    return gui, btn, testBtn, baseBtn, lagBtn, xrayBtn
 end
 
-local gui, btn, testBtn, baseBtn, lagBtn = createGui()
+local gui, btn, testBtn, baseBtn, lagBtn, xrayBtn = createGui()
 
 -- 🔁 RESPAWN
 player.CharacterAdded:Connect(function()
     task.wait(0.5)
     if not player.PlayerGui:FindFirstChild("AutoEventUI") then
-        gui, btn, testBtn, baseBtn, lagBtn = createGui()
+        gui, btn, testBtn, baseBtn, lagBtn, xrayBtn = createGui()
     end
 end)
 
 -- ⚙️ BIẾN
 local enabled = false
 local fake = nil
+local xrayEnabled = false
 
 btn.MouseButton1Click:Connect(function()
     enabled = not enabled
@@ -115,7 +125,18 @@ testBtn.MouseButton1Click:Connect(function()
     end
 end)
 
--- 🚀 TELE CHIA BƯỚC
+-- 🚶 SPEED 30
+task.spawn(function()
+    while true do
+        local hum = player.Character and player.Character:FindFirstChild("Humanoid")
+        if hum then
+            hum.WalkSpeed = 30
+        end
+        task.wait(0.5)
+    end
+end)
+
+-- 🚀 TELE
 local function stepTeleport(pos)
     local hrp = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
     if not hrp then return end
@@ -139,41 +160,48 @@ local function stayStill(t)
     end
 end
 
--- 🧠 TELE CHUẨN (ÉP VÀO VÙNG XANH)
-local function smartForwardTeleport(pos)
-    local hrp = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
-    if not hrp then return end
+-- 🧠 TELE LEGIT
+local function legitTeleport(pos)
+    local char = player.Character
+    local hrp = char and char:FindFirstChild("HumanoidRootPart")
+    local hum = char and char:FindFirstChild("Humanoid")
+    if not hrp or not hum then return end
 
-    stepTeleport(pos)
+    local near = pos - (hrp.CFrame.LookVector * 6)
+    stepTeleport(near)
 
-    hrp.CFrame = CFrame.new(hrp.Position, pos)
-    task.wait(0.1)
+    task.wait(0.2)
 
-    -- 🔥 tiến nhiều lần để chắc chắn vào vùng
-    for i = 1,5 do
-        hrp.CFrame = hrp.CFrame + (hrp.CFrame.LookVector * 2)
-        task.wait(0.05)
+    hum:MoveTo(pos)
+
+    local done = false
+    hum.MoveToFinished:Connect(function()
+        done = true
+    end)
+
+    local t = tick()
+    while not done and tick() - t < 2 do
+        task.wait()
     end
 
-    stayStill(2.2)
+    stayStill(2.3)
 end
 
 -- 🏠 TELE BASE
 baseBtn.MouseButton1Click:Connect(function()
     if basePosition then
-        smartForwardTeleport(basePosition)
+        legitTeleport(basePosition)
     end
 end)
 
--- ⚡ FIX LAG (KHÔNG XUYÊN TƯỜNG)
+-- ⚡ FIX LAG (SAFE)
 lagBtn.MouseButton1Click:Connect(function()
     for _,v in pairs(workspace:GetDescendants()) do
-
         if v:IsA("ParticleEmitter") or
            v:IsA("Trail") or
            v:IsA("Smoke") or
            v:IsA("Fire") then
-            v:Destroy()
+            v.Enabled = false
         end
 
         if v:IsA("PointLight") or
@@ -186,17 +214,36 @@ lagBtn.MouseButton1Click:Connect(function()
     game.Lighting.GlobalShadows = false
 end)
 
+-- 👁️ XRAY BASE
+xrayBtn.MouseButton1Click:Connect(function()
+    xrayEnabled = not xrayEnabled
+    xrayBtn.Text = xrayEnabled and "XRAY ON" or "XRAY BASE"
+
+    for _,v in pairs(workspace:GetDescendants()) do
+        if v:IsA("BasePart") then
+            local name = v.Name:lower()
+
+            if name:find("wall") or name:find("house") or name:find("base") then
+                if xrayEnabled then
+                    v.LocalTransparencyModifier = 0.7
+                else
+                    v.LocalTransparencyModifier = 0
+                end
+            end
+        end
+    end
+end)
+
 -- 🔁 AUTO EVENT
 task.spawn(function()
     while true do
         if enabled then
             for _,v in pairs(workspace:GetDescendants()) do
                 if v.Name == "EasterBaseSkinPedestal" then
-
                     local part = v:IsA("BasePart") and v or v:FindFirstChildWhichIsA("BasePart")
 
                     if part then
-                        smartForwardTeleport(part.Position)
+                        legitTeleport(part.Position)
 
                         for _,p in pairs(v:GetDescendants()) do
                             if p:IsA("ProximityPrompt") then
